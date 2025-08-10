@@ -16,27 +16,29 @@
             Your browser does not support the video tag.
         </video>
     </div>
-    <script>
-        function loadVideo() {
-            const urlInput = document.getElementById('video-url');
-            const videoPlayer = document.getElementById('video-player');
-            const url = urlInput.value.trim();
+<script>
+    function loadVideo() {
+        const urlInput = document.getElementById('video-url');
+        const videoPlayer = document.getElementById('video-player');
+        const url = urlInput.value.trim();
 
-            if (!url) {
-                alert('Please enter a valid video URL.');
-                return;
-            }
-
-            // Basic validation: Check if it looks like a video URL
-            if (!url.match(/\.(mp4|webm|ogg)$/i)) {
-                alert('URL should point to a video file (e.g., .mp4, .webm, .ogg).');
-                return;
-            }
-
-            videoPlayer.src = url;
-            videoPlayer.load(); // Reload the video element with new source
-            videoPlayer.style.display = 'block'; // Show the player if hidden
+        if (!url) {
+            alert('Please enter a valid video URL.');
+            return;
         }
-    </script>
+
+        // Temporarily loosen the extension check for testing
+        // You can remove this if the URL works without it
+        videoPlayer.src = url;
+        videoPlayer.load();
+        videoPlayer.style.display = 'block';
+
+        // Optional: Add error handling
+        videoPlayer.onerror = () => {
+            alert('Error loading video. Ensure the URL is a direct video link and supports streaming.');
+            videoPlayer.style.display = 'none';
+        };
+    }
+</script>
 </body>
 </html>
