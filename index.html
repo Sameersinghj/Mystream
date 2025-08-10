@@ -3,154 +3,53 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="MyStream Video Player - Stream videos with ease. Developed by @Hellfirez3643, Channel: @VengeanceSeekers">
     <title>MyStream Video Player</title>
     <link rel="stylesheet" href="styles.css">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Material+Icons" rel="stylesheet">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/particles.js/2.0.2/particles.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
 </head>
 <body>
-    <div id="intro-splash">
-        <div class="intro-logo">MyStream</div>
-        <div id="particles-js"></div>
+    <div class="container">
+        <h1>MyStream Video Player</h1>
+        <p>Paste a direct video URL and click Load to start watching.</p>
+        <div class="input-group">
+            <input type="url" id="video-url" placeholder="Enter direct video URL (e.g., https://example.com/video.mp4)" required>
+            <button onclick="loadVideo()">Load Video</button>
+        </div>
+        <div id="video-container">
+            <video id="video-player" controls autoplay muted playsinline>
+                Your browser does not support the video tag.
+            </video>
+            <div id="loading-spinner" class="loading">Loading...</div>
+        </div>
     </div>
-
-    <div class="app-container" id="main-content" style="display: none;">
-        <header>
-            <div class="logo">MyStream</div>
-            <nav>
-                <a href="#home">Home</a>
-                <a href="#about">About</a>
-            </nav>
-        </header>
-
-        <main class="player-container">
-            <h1>Welcome to MyStream Video Player</h1>
-            <p class="subtitle">Stream your favorite videos with a single click. Paste a direct URL below.</p>
-            <div class="input-section">
-                <input type="url" id="video-url" placeholder="Enter direct video URL (e.g., https://example.com/video.mp4)" aria-label="Video URL input" required>
-                <button onclick="loadVideo()" aria-label="Load Video">Load Video</button>
-            </div>
-            <div class="video-wrapper" role="region" aria-live="polite">
-                <video id="video-player" controls autoplay muted playsinline>
-                    <source src="" type="video/mp4">
-                    Your browser does not support the video tag.
-                </video>
-                <div id="loading-spinner" class="spinner" aria-hidden="true">
-                    <div class="spinner-inner"></div>
-                </div>
-                <div id="error-message" class="error" role="alert"></div>
-            </div>
-        </main>
-
-        <footer>
-            <p>Developed by: <a href="https://t.me/Hellfirez3643" target="_blank" rel="noopener">@Hellfirez3643</a> | Channel: <a href="https://t.me/VengeanceSeekers" target="_blank" rel="noopener">@VengeanceSeekers</a></p>
-            <p>&copy; 2025 MyStream. All rights reserved.</p>
-        </footer>
-    </div>
-
     <script>
-        // Initialize Particles.js with enhanced gaming effects
-        particlesJS('particles-js', {
-            particles: {
-                number: { value: 100, density: { enable: true, value_area: 800 } },
-                color: { value: '#ffd700' },
-                shape: { type: 'polygon', polygon: { nb_sides: 5 }, stroke: { width: 1, color: '#ffaa00' } },
-                opacity: { value: 0.7, random: true },
-                size: { value: 4, random: true },
-                line_linked: { enable: true, distance: 120, color: '#ffaa00', opacity: 0.5, width: 1 },
-                move: { enable: true, speed: 8, direction: 'top', random: true, straight: false, out_mode: 'out', bounce: true }
-            },
-            interactivity: {
-                detect_on: 'canvas',
-                events: { onhover: { enable: true, mode: 'grab' }, onclick: { enable: true, mode: 'push' }, resize: true },
-                modes: { grab: { distance: 300, line_linked: { opacity: 0.8 } }, push: { particles_nb: 6 } }
-            },
-            retina_detect: true
-        });
-
-        // GSAP Intro Animation with Fallback
-        function startIntro() {
-            const intro = document.getElementById('intro-splash');
-            const mainContent = document.getElementById('main-content');
-            const introLogo = document.querySelector('.intro-logo');
-
-            if (!gsap) {
-                console.error('GSAP not loaded, falling back to basic transition');
-                intro.style.opacity = '0';
-                intro.style.display = 'none';
-                mainContent.style.display = 'block';
-                return;
-            }
-
-            gsap.timeline()
-                .from(introLogo, { duration: 1, scale: 0, rotation: -180, opacity: 0, ease: 'back.out(1.7)' })
-                .to(introLogo, { duration: 1, textShadow: '0 0 30px #ffd700, 0 0 60px #ffaa00', ease: 'power1.inOut' }, '-=0.5')
-                .to(intro, { duration: 1, opacity: 0, ease: 'power2.inOut', onComplete: () => {
-                    intro.style.display = 'none';
-                    mainContent.style.display = 'block';
-                    gsap.from(mainContent, { duration: 0.8, y: 50, opacity: 0, ease: 'power3.out' });
-                } }, '+=0.5');
-        }
-
-        // Ensure intro runs after DOM and scripts load
-        window.addEventListener('load', startIntro);
-
-        // Video Player Logic with Enhanced Effects
-        const videoPlayer = document.getElementById('video-player');
-        const videoUrlInput = document.getElementById('video-url');
-        const loadingSpinner = document.getElementById('loading-spinner');
-        const errorMessage = document.getElementById('error-message');
-
         function loadVideo() {
-            const url = videoUrlInput.value.trim();
+            const urlInput = document.getElementById('video-url');
+            const videoPlayer = document.getElementById('video-player');
+            const loadingSpinner = document.getElementById('loading-spinner');
+            const url = urlInput.value.trim();
+
             if (!url) {
-                errorMessage.textContent = 'Please enter a valid video URL.';
-                errorMessage.classList.add('show');
+                alert('Please enter a valid video URL.');
                 return;
             }
 
             loadingSpinner.style.display = 'block';
-            errorMessage.classList.remove('show');
-
             videoPlayer.src = url;
             videoPlayer.load();
             videoPlayer.style.display = 'block';
 
             videoPlayer.onloadeddata = () => {
                 loadingSpinner.style.display = 'none';
-                videoPlayer.play().catch(() => {
-                    errorMessage.textContent = 'Autoplay blocked. Please click play manually.';
-                    errorMessage.classList.add('show');
-                });
-                gsap.to(videoPlayer, { duration: 0.5, scale: 1.02, ease: 'power1.inOut', yoyo: true, repeat: 1 });
-                gsap.to('.video-wrapper', { duration: 0.3, boxShadow: '0 6px 30px rgba(255, 215, 0, 0.6)', ease: 'power1.out' });
+                videoPlayer.play();
             };
 
             videoPlayer.onerror = () => {
                 loadingSpinner.style.display = 'none';
-                errorMessage.textContent = 'Error loading video. Ensure the URL is a direct video link and supports streaming.';
-                errorMessage.classList.add('show');
+                alert('Error loading video. Ensure the URL is a direct video link and supports streaming.');
                 videoPlayer.style.display = 'none';
-                gsap.to(errorMessage, { duration: 0.1, x: -5, ease: 'power1.inOut', repeat: 5, yoyo: true });
             };
         }
-
-        videoUrlInput.addEventListener('input', () => {
-            if (videoPlayer.src && !videoPlayer.paused) {
-                videoPlayer.pause();
-                videoPlayer.style.display = 'none';
-                videoPlayer.src = '';
-                errorMessage.classList.remove('show');
-                gsap.to('.video-wrapper', { duration: 0.3, boxShadow: '0 4px 20px rgba(0, 0, 0, 0.6)', ease: 'power1.in' });
-            }
-        });
-
-        document.querySelectorAll('button, nav a').forEach(el => {
-            el.addEventListener('mouseover', () => gsap.to(el, { duration: 0.3, scale: 1.05, ease: 'power1.out', boxShadow: '0 2px 10px rgba(255, 215, 0, 0.5)' }));
-            el.addEventListener('mouseout', () => gsap.to(el, { duration: 0.3, scale: 1, ease: 'power1.in', boxShadow: 'none' }));
-        });
     </script>
 </body>
 </html>
