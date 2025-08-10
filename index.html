@@ -7,9 +7,19 @@
     <title>MyStream Video Player</title>
     <link rel="stylesheet" href="styles.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Material+Icons" rel="stylesheet">
+    <!-- CDN for GSAP for advanced animations -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+    <!-- CDN for particles.js for gaming-like effects -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/particles.js/2.0.2/particles.min.js"></script>
 </head>
 <body>
-    <div class="app-container">
+    <!-- Gaming-like Intro Splash Screen -->
+    <div id="intro-splash">
+        <div class="intro-logo">MyStream</div>
+        <div id="particles-js"></div>
+    </div>
+
+    <div class="app-container" id="main-content" style="display: none;">
         <header>
             <div class="logo">MyStream</div>
             <nav>
@@ -44,6 +54,43 @@
     </div>
 
     <script>
+        // Initialize Particles.js for background effects
+        particlesJS('particles-js', {
+            particles: {
+                number: { value: 80, density: { enable: true, value_area: 800 } },
+                color: { value: '#ffd700' },
+                shape: { type: 'circle', stroke: { width: 0, color: '#000000' } },
+                opacity: { value: 0.5, random: false },
+                size: { value: 3, random: true },
+                line_linked: { enable: true, distance: 150, color: '#ffaa00', opacity: 0.4, width: 1 },
+                move: { enable: true, speed: 6, direction: 'none', random: false, straight: false, out_mode: 'out', bounce: false }
+            },
+            interactivity: {
+                detect_on: 'canvas',
+                events: { onhover: { enable: true, mode: 'repulse' }, onclick: { enable: true, mode: 'push' }, resize: true },
+                modes: { grab: { distance: 400, line_linked: { opacity: 1 } }, bubble: { distance: 400, size: 40, duration: 2, opacity: 8 }, repulse: { distance: 200 }, push: { particles_nb: 4 }, remove: { particles_nb: 2 } }
+            },
+            retina_detect: true
+        });
+
+        // GSAP for intro animation
+        window.addEventListener('load', () => {
+            const intro = document.getElementById('intro-splash');
+            const mainContent = document.getElementById('main-content');
+            const introLogo = document.querySelector('.intro-logo');
+
+            // Animate logo entrance with gaming flair (scale, glow, rotate)
+            gsap.timeline()
+                .from(introLogo, { duration: 1, scale: 0, rotation: -180, opacity: 0, ease: 'back.out(1.7)' })
+                .to(introLogo, { duration: 1, textShadow: '0 0 20px #ffd700, 0 0 40px #ffaa00', ease: 'power1.inOut' }, '-=0.5')
+                .to(intro, { duration: 1, opacity: 0, ease: 'power2.inOut', onComplete: () => {
+                    intro.style.display = 'none';
+                    mainContent.style.display = 'block';
+                    gsap.from(mainContent, { duration: 0.8, y: 50, opacity: 0, ease: 'power3.out' });
+                } }, '+=0.5');  // Total ~2.5 seconds
+        });
+
+        // Video Player Logic with Enhanced Effects
         const videoPlayer = document.getElementById('video-player');
         const videoUrlInput = document.getElementById('video-url');
         const loadingSpinner = document.getElementById('loading-spinner');
@@ -70,6 +117,8 @@
                     errorMessage.textContent = 'Autoplay blocked. Please click play manually.';
                     errorMessage.classList.add('show');
                 });
+                // Add GSAP animation on load success (e.g., subtle pulse)
+                gsap.to(videoPlayer, { duration: 0.5, scale: 1.02, ease: 'power1.inOut', yoyo: true, repeat: 1 });
             };
 
             videoPlayer.onerror = () => {
@@ -77,10 +126,12 @@
                 errorMessage.textContent = 'Error loading video. Ensure the URL is a direct video link and supports streaming.';
                 errorMessage.classList.add('show');
                 videoPlayer.style.display = 'none';
+                // Shake effect on error
+                gsap.to(errorMessage, { duration: 0.1, x: -5, ease: 'power1.inOut', repeat: 5, yoyo: true });
             };
         }
 
-        // Hide video and error on input change if not loaded
+        // Hide video and error on input change
         videoUrlInput.addEventListener('input', () => {
             if (videoPlayer.src && !videoPlayer.paused) {
                 videoPlayer.pause();
@@ -88,6 +139,12 @@
                 videoPlayer.src = '';
                 errorMessage.classList.remove('show');
             }
+        });
+
+        // Additional JS for hover effects on buttons and nav
+        document.querySelectorAll('button, nav a').forEach(el => {
+            el.addEventListener('mouseover', () => gsap.to(el, { duration: 0.3, scale: 1.05, ease: 'power1.out' }));
+            el.addEventListener('mouseout', () => gsap.to(el, { duration: 0.3, scale: 1, ease: 'power1.in' }));
         });
     </script>
 </body>
