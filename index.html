@@ -3,42 +3,92 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Simple Video Player</title>
+    <meta name="description" content="MyStream Video Player - Stream videos with ease. Developed by @Hellfirez3643, Channel: @VengeanceSeekers">
+    <title>MyStream Video Player</title>
     <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Material+Icons" rel="stylesheet">
 </head>
 <body>
-    <div class="container">
-        <h1>Simple Video Player</h1>
-        <p>Paste a direct video URL (e.g., https://example.com/video.mp4) and click Load.</p>
-        <input type="url" id="video-url" placeholder="Enter direct video URL" required>
-        <button onclick="loadVideo()">Load Video</button>
-        <video id="video-player" controls autoplay muted playsinline>
-            Your browser does not support the video tag.
-        </video>
-    </div>
-<script>
-    function loadVideo() {
-        const urlInput = document.getElementById('video-url');
-        const videoPlayer = document.getElementById('video-player');
-        const url = urlInput.value.trim();
+    <div class="app-container">
+        <header>
+            <div class="logo">MyStream</div>
+            <nav>
+                <a href="#home">Home</a>
+                <a href="#about">About</a>
+            </nav>
+        </header>
 
-        if (!url) {
-            alert('Please enter a valid video URL.');
-            return;
+        <main class="player-container">
+            <h1>Welcome to MyStream Video Player</h1>
+            <p class="subtitle">Stream your favorite videos with a single click. Paste a direct URL below.</p>
+            <div class="input-section">
+                <input type="url" id="video-url" placeholder="Enter direct video URL (e.g., https://example.com/video.mp4)" aria-label="Video URL input" required>
+                <button onclick="loadVideo()" aria-label="Load Video">Load Video</button>
+            </div>
+            <div class="video-wrapper" role="region" aria-live="polite">
+                <video id="video-player" controls autoplay muted playsinline>
+                    <source src="" type="video/mp4">
+                    Your browser does not support the video tag.
+                </video>
+                <div id="loading-spinner" class="spinner" aria-hidden="true">
+                    <div class="spinner-inner"></div>
+                </div>
+                <div id="error-message" class="error" role="alert"></div>
+            </div>
+        </main>
+
+        <footer>
+            <p>Developed by: <a href="https://t.me/Hellfirez3643" target="_blank" rel="noopener">@Hellfirez3643 (tg linked)</a> | Channel: <a href="https://t.me/VengeanceSeekers" target="_blank" rel="noopener">@VengeanceSeekers (tg linked)</a></p>
+            <p>&copy; 2025 MyStream. All rights reserved.</p>
+        </footer>
+    </div>
+
+    <script>
+        const videoPlayer = document.getElementById('video-player');
+        const videoUrlInput = document.getElementById('video-url');
+        const loadingSpinner = document.getElementById('loading-spinner');
+        const errorMessage = document.getElementById('error-message');
+
+        function loadVideo() {
+            const url = videoUrlInput.value.trim();
+            if (!url) {
+                errorMessage.textContent = 'Please enter a valid video URL.';
+                errorMessage.classList.add('show');
+                return;
+            }
+
+            loadingSpinner.style.display = 'block';
+            errorMessage.classList.remove('show');
+
+            videoPlayer.src = url;
+            videoPlayer.load();
+            videoPlayer.style.display = 'block';
+
+            videoPlayer.onloadeddata = () => {
+                loadingSpinner.style.display = 'none';
+                videoPlayer.play().catch(() => {
+                    errorMessage.textContent = 'Autoplay blocked. Please click play manually.';
+                    errorMessage.classList.add('show');
+                });
+            };
+
+            videoPlayer.onerror = () => {
+                loadingSpinner.style.display = 'none';
+                errorMessage.textContent = 'Error loading video. Ensure the URL is a direct video link and supports streaming.';
+                errorMessage.classList.add('show');
+                videoPlayer.style.display = 'none';
+            };
         }
 
-        // Temporarily loosen the extension check for testing
-        // You can remove this if the URL works without it
-        videoPlayer.src = url;
-        videoPlayer.load();
-        videoPlayer.style.display = 'block';
-
-        // Optional: Add error handling
-        videoPlayer.onerror = () => {
-            alert('Error loading video. Ensure the URL is a direct video link and supports streaming.');
-            videoPlayer.style.display = 'none';
-        };
-    }
-</script>
+        // Hide video and error on input change if not loaded
+        videoUrlInput.addEventListener('input', () => {
+            if (videoPlayer.src && !videoPlayer.paused) {
+                videoPlayer.pause();
+                videoPlayer.style.display = 'none';
+                videoPlayer.src = '';
+                errorMessage.classList.remove('show');
+            }
+        });
+    </script>
 </body>
 </html>
