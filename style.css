@@ -9,10 +9,9 @@ body {
     background: linear-gradient(135deg, #0f1f3d, #1a2e5e);
     color: #e0e0e0;
     line-height: 1.6;
-    overflow: hidden; /* Prevent scroll during intro */
+    overflow-x: hidden;
 }
 
-/* Intro Splash Styles */
 #intro-splash {
     position: fixed;
     top: 0;
@@ -24,6 +23,7 @@ body {
     justify-content: center;
     align-items: center;
     z-index: 1000;
+    transition: opacity 0.5s ease;
 }
 
 .intro-logo {
@@ -50,6 +50,8 @@ body {
     max-width: 1200px;
     margin: 0 auto;
     padding: 20px;
+    opacity: 0;
+    transition: opacity 0.5s ease;
 }
 
 header {
@@ -160,7 +162,7 @@ button:hover {
     border-radius: 10px;
     overflow: hidden;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
-    transition: transform 0.3s ease; /* For JS hover/scale effects */
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
 #video-player {
@@ -230,7 +232,6 @@ footer p {
     margin: 5px 0;
 }
 
-/* Responsive Design */
 @media (max-width: 768px) {
     h1 { font-size: 2em; }
     .subtitle { font-size: 1em; }
