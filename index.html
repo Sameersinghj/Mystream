@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Video Player</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Simple Video Player</h1>
+        <p>Paste a direct video URL (e.g., https://example.com/video.mp4) and click Load.</p>
+        <input type="url" id="video-url" placeholder="Enter direct video URL" required>
+        <button onclick="loadVideo()">Load Video</button>
+        <video id="video-player" controls autoplay muted playsinline>
+            Your browser does not support the video tag.
+        </video>
+    </div>
+    <script>
+        function loadVideo() {
+            const urlInput = document.getElementById('video-url');
+            const videoPlayer = document.getElementById('video-player');
+            const url = urlInput.value.trim();
+
+            if (!url) {
+                alert('Please enter a valid video URL.');
+                return;
+            }
+
+            // Basic validation: Check if it looks like a video URL
+            if (!url.match(/\.(mp4|webm|ogg)$/i)) {
+                alert('URL should point to a video file (e.g., .mp4, .webm, .ogg).');
+                return;
+            }
+
+            videoPlayer.src = url;
+            videoPlayer.load(); // Reload the video element with new source
+            videoPlayer.style.display = 'block'; // Show the player if hidden
+        }
+    </script>
+</body>
+</html>
