@@ -403,8 +403,11 @@
         // Initialize particle system
         const particleSystem = new ParticleSystem(document.getElementById('particles-canvas'));
 
-        // API Configuration
-        const API_BASE_URL = 'http://localhost:3000/api'; // Change this to your server URL
+        // API Configuration - Update this to your Vercel URL
+        const API_BASE_URL = window.location.origin + '/api'; // Automatically uses current domain
+        
+        // Debug API connection
+        console.log('API Base URL:', API_BASE_URL);
         
         // Utility functions
         function generateSecureId() {
@@ -440,60 +443,63 @@
                 // Show loading
                 loadingOverlay.style.display = 'flex';
                 videoPlayer.style.display = 'none';
-                updateLoadingText('Generating secure link...');
+                updateLoadingText('Creating secure link...');
 
-                // Test if video loads first
-                const testVideo = document.createElement('video');
-                testVideo.crossOrigin = 'anonymous';
+                // Create secure link via API (skip video validation to avoid CORS issues)
+                const response = await fetch(`${API_BASE_URL}/create-secure-link`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        url: videoUrl,
+                        expiryHours: expiryHours
+                    })
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({}));
+                    throw new Error(errorData.error || `HTTP ${response.status}: Failed to create secure link`);
+                }
+
+                const data = await response.json();
                 
-                testVideo.onloadeddata = async () => {
-                    try {
-                        // Video loads, now create secure link via API
-                        const response = await fetch(`${API_BASE_URL}/create-secure-link`, {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                            },
-                            body: JSON.stringify({
-                                url: videoUrl,
-                                expiryHours: expiryHours
-                            })
-                        });
-
-                        if (!response.ok) {
-                            throw new Error('Failed to create secure link');
-                        }
-
-                        const data = await response.json();
-                        
-                        // Display video and secure link
-                        videoPlayer.src = videoUrl;
-                        videoPlayer.style.display = 'block';
-                        loadingOverlay.style.display = 'none';
-                        
-                        const secureLink = `${window.location.origin}${window.location.pathname}?id=${data.secureId}`;
-                        generatedLink.textContent = secureLink;
-                        copyButton.style.display = 'block';
-                        
-                        const expiryText = expiryHours === 0 ? 'never' : `in ${expiryHours} hour(s)`;
-                        showMessage(`Secure link generated successfully! Link expires ${expiryText}.`);
-                        
-                    } catch (error) {
-                        loadingOverlay.style.display = 'none';
-                        showMessage('Failed to create secure link: ' + error.message, 'error');
-                    }
-                };
-                
-                testVideo.onerror = () => {
+                // Try to load video after creating secure link
+                videoPlayer.onloadeddata = () => {
+                    videoPlayer.style.display = 'block';
                     loadingOverlay.style.display = 'none';
-                    showMessage('Failed to load video. Please check the URL and try again.', 'error');
                 };
                 
-                testVideo.src = videoUrl;
+                videoPlayer.onerror = () => {
+                    // Even if video preview fails, we still have the secure link
+                    videoPlayer.style.display = 'none';
+                    loadingOverlay.style.display = 'none';
+                    showMessage('Secure link created! Video preview unavailable but link will work.', 'success');
+                };
+                
+                // Set video source
+                videoPlayer.src = videoUrl;
+                
+                // Always show the secure link regardless of video preview
+                const secureLink = `${window.location.origin}${window.location.pathname}?id=${data.secureId}`;
+                generatedLink.textContent = secureLink;
+                copyButton.style.display = 'block';
+                
+                const expiryText = expiryHours === 0 ? 'never' : `in ${expiryHours} hour(s)`;
+                showMessage(`Secure link generated successfully! Link expires ${expiryText}.`);
+                
+                // Hide loading after a short delay if video doesn't load
+                setTimeout(() => {
+                    if (loadingOverlay.style.display !== 'none') {
+                        loadingOverlay.style.display = 'none';
+                        showMessage('Secure link ready! Video may load when accessed via the secure link.', 'success');
+                    }
+                }, 3000);
                 
             } catch (error) {
                 loadingOverlay.style.display = 'none';
-                showMessage('Error processing video: ' + error.message, 'error');
+                console.error('API Error:', error);
+                showMessage('Error: ' + error.message, 'error');
             }
         }
 
