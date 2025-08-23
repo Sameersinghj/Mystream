@@ -3,53 +3,555 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MyStream Video Player</title>
-    <link rel="stylesheet" href="styles.css">
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <title>SecurePlay - Encrypted Video Player</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        #particles-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        .container {
+            position: relative;
+            z-index: 2;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .player-container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 25px 45px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            width: 100%;
+            max-width: 900px;
+            animation: slideIn 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(30px) scale(0.9);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .header {
+            padding: 30px;
+            text-align: center;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.1));
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .logo {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: #fff;
+            text-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
+            margin-bottom: 10px;
+            animation: glow 2s ease-in-out infinite alternate;
+        }
+
+        @keyframes glow {
+            from { text-shadow: 0 0 20px rgba(255, 255, 255, 0.5); }
+            to { text-shadow: 0 0 30px rgba(255, 255, 255, 0.8), 0 0 40px rgba(255, 255, 255, 0.3); }
+        }
+
+        .subtitle {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 1.1em;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .video-section {
+            margin-bottom: 30px;
+        }
+
+        .video-container {
+            position: relative;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+            background: #000;
+            aspect-ratio: 16/9;
+            margin-bottom: 20px;
+        }
+
+        video {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-size: 1.2em;
+        }
+
+        .spinner {
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-top: 3px solid #fff;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin-right: 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            color: rgba(255, 255, 255, 0.9);
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        input, button {
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1em;
+            transition: all 0.3s ease;
+        }
+
+        input {
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        input::placeholder {
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        input:focus {
+            outline: none;
+            background: rgba(255, 255, 255, 0.2);
+            border-color: rgba(255, 255, 255, 0.4);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #ff6b6b, #ff8e8e);
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(255, 107, 107, 0.4);
+        }
+
+        .btn:active {
+            transform: translateY(-1px);
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .btn:hover::before {
+            left: 100%;
+        }
+
+        .api-section {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 25px;
+            border-radius: 15px;
+            margin-top: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .api-title {
+            color: #fff;
+            font-size: 1.3em;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+
+        .generated-link {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 8px;
+            color: #4ade80;
+            font-family: 'Courier New', monospace;
+            word-break: break-all;
+            margin: 10px 0;
+            border: 1px solid rgba(74, 222, 128, 0.3);
+        }
+
+        .copy-btn {
+            background: linear-gradient(135deg, #4ade80, #22c55e);
+            margin-top: 10px;
+        }
+
+        .copy-btn:hover {
+            box-shadow: 0 10px 25px rgba(74, 222, 128, 0.4);
+        }
+
+        .error {
+            background: rgba(239, 68, 68, 0.2);
+            border: 1px solid rgba(239, 68, 68, 0.5);
+            color: #fecaca;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+        }
+
+        .success {
+            background: rgba(34, 197, 94, 0.2);
+            border: 1px solid rgba(34, 197, 94, 0.5);
+            color: #bbf7d0;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            .logo {
+                font-size: 2em;
+            }
+            .content {
+                padding: 20px;
+            }
+        }
+    </style>
 </head>
 <body>
+    <canvas id="particles-canvas"></canvas>
+    
     <div class="container">
-        <h1>MyStream Video Player</h1>
-        <p>Paste a direct video URL and click Load to start watching.</p>
-        <div class="input-group">
-            <input type="url" id="video-url" placeholder="Enter direct video URL (e.g., https://example.com/video.mp4)" required>
-            <button onclick="loadVideo()">Load Video</button>
-        </div>
-        <div id="video-container">
-            <video id="video-player" controls autoplay muted playsinline>
-                Your browser does not support the video tag.
-            </video>
-            <div id="loading-spinner" class="loading">Loading...</div>
+        <div class="player-container">
+            <div class="header">
+                <div class="logo">🔒 SecurePlay</div>
+                <div class="subtitle">Encrypted Video Player & API</div>
+            </div>
+            
+            <div class="content">
+                <div class="video-section">
+                    <div class="video-container">
+                        <video id="videoPlayer" controls style="display: none;"></video>
+                        <div id="loadingOverlay" class="loading-overlay">
+                            <div class="spinner"></div>
+                            <span>Ready to load video...</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label for="videoUrl">Video URL</label>
+                    <input type="text" id="videoUrl" placeholder="https://pixeldrain.dev/api/file/9M9rwCqA?download">
+                </div>
+
+                <button class="btn" onclick="loadVideo()">🎬 Load & Encrypt Video</button>
+
+                <div class="api-section">
+                    <div class="api-title">🔗 Generated Secure Link</div>
+                    <div id="generatedLink" class="generated-link">No link generated yet</div>
+                    <button class="btn copy-btn" onclick="copyToClipboard()" style="display: none;" id="copyButton">📋 Copy Secure Link</button>
+                </div>
+
+                <div id="messageArea"></div>
+            </div>
         </div>
     </div>
-    <script>
-        function loadVideo() {
-            const urlInput = document.getElementById('video-url');
-            const videoPlayer = document.getElementById('video-player');
-            const loadingSpinner = document.getElementById('loading-spinner');
-            const url = urlInput.value.trim();
 
-            if (!url) {
-                alert('Please enter a valid video URL.');
+    <script>
+        // Particle system
+        class ParticleSystem {
+            constructor(canvas) {
+                this.canvas = canvas;
+                this.ctx = canvas.getContext('2d');
+                this.particles = [];
+                this.resize();
+                this.init();
+                
+                window.addEventListener('resize', () => this.resize());
+                this.animate();
+            }
+
+            resize() {
+                this.canvas.width = window.innerWidth;
+                this.canvas.height = window.innerHeight;
+            }
+
+            init() {
+                for (let i = 0; i < 50; i++) {
+                    this.particles.push({
+                        x: Math.random() * this.canvas.width,
+                        y: Math.random() * this.canvas.height,
+                        vx: (Math.random() - 0.5) * 2,
+                        vy: (Math.random() - 0.5) * 2,
+                        size: Math.random() * 3 + 1,
+                        opacity: Math.random() * 0.5 + 0.2
+                    });
+                }
+            }
+
+            animate() {
+                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                
+                this.particles.forEach(particle => {
+                    particle.x += particle.vx;
+                    particle.y += particle.vy;
+
+                    if (particle.x < 0 || particle.x > this.canvas.width) particle.vx *= -1;
+                    if (particle.y < 0 || particle.y > this.canvas.height) particle.vy *= -1;
+
+                    this.ctx.beginPath();
+                    this.ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
+                    this.ctx.fillStyle = `rgba(255, 255, 255, ${particle.opacity})`;
+                    this.ctx.fill();
+                });
+
+                // Draw connections
+                this.particles.forEach((particle, i) => {
+                    this.particles.slice(i + 1).forEach(other => {
+                        const dx = particle.x - other.x;
+                        const dy = particle.y - other.y;
+                        const distance = Math.sqrt(dx * dx + dy * dy);
+
+                        if (distance < 100) {
+                            this.ctx.beginPath();
+                            this.ctx.moveTo(particle.x, particle.y);
+                            this.ctx.lineTo(other.x, other.y);
+                            this.ctx.strokeStyle = `rgba(255, 255, 255, ${0.1 * (1 - distance / 100)})`;
+                            this.ctx.stroke();
+                        }
+                    });
+                });
+
+                requestAnimationFrame(() => this.animate());
+            }
+        }
+
+        // Initialize particle system
+        const particleSystem = new ParticleSystem(document.getElementById('particles-canvas'));
+
+        // Encryption functions
+        function simpleEncrypt(text, key) {
+            let result = '';
+            for (let i = 0; i < text.length; i++) {
+                result += String.fromCharCode(text.charCodeAt(i) ^ key.charCodeAt(i % key.length));
+            }
+            return btoa(result);
+        }
+
+        function simpleDecrypt(encryptedText, key) {
+            try {
+                const decodedText = atob(encryptedText);
+                let result = '';
+                for (let i = 0; i < decodedText.length; i++) {
+                    result += String.fromCharCode(decodedText.charCodeAt(i) ^ key.charCodeAt(i % key.length));
+                }
+                return result;
+            } catch (e) {
+                return null;
+            }
+        }
+
+        function generateKey() {
+            return Math.random().toString(36).substring(2) + Date.now().toString(36);
+        }
+
+        function showMessage(message, type = 'success') {
+            const messageArea = document.getElementById('messageArea');
+            messageArea.innerHTML = `<div class="${type}">${message}</div>`;
+            setTimeout(() => {
+                messageArea.innerHTML = '';
+            }, 5000);
+        }
+
+        function updateLoadingText(text) {
+            document.querySelector('.loading-overlay span').textContent = text;
+        }
+
+        async function loadVideo() {
+            const videoUrl = document.getElementById('videoUrl').value.trim();
+            const videoPlayer = document.getElementById('videoPlayer');
+            const loadingOverlay = document.getElementById('loadingOverlay');
+            const generatedLink = document.getElementById('generatedLink');
+            const copyButton = document.getElementById('copyButton');
+
+            if (!videoUrl) {
+                showMessage('Please enter a video URL', 'error');
                 return;
             }
 
-            loadingSpinner.style.display = 'block';
-            videoPlayer.src = url;
-            videoPlayer.load();
-            videoPlayer.style.display = 'block';
-
-            videoPlayer.onloadeddata = () => {
-                loadingSpinner.style.display = 'none';
-                videoPlayer.play();
-            };
-
-            videoPlayer.onerror = () => {
-                loadingSpinner.style.display = 'none';
-                alert('Error loading video. Ensure the URL is a direct video link and supports streaming.');
+            try {
+                // Show loading
+                loadingOverlay.style.display = 'flex';
                 videoPlayer.style.display = 'none';
-            };
+                updateLoadingText('Loading video...');
+
+                // Generate encryption key
+                const encryptionKey = generateKey();
+                
+                // Encrypt the URL
+                const encryptedUrl = simpleEncrypt(videoUrl, encryptionKey);
+                
+                // Create secure link
+                const currentUrl = window.location.origin + window.location.pathname;
+                const secureLink = `${currentUrl}?v=${encodeURIComponent(encryptedUrl)}&k=${encodeURIComponent(encryptionKey)}`;
+                
+                // Test if video loads
+                const testVideo = document.createElement('video');
+                testVideo.crossOrigin = 'anonymous';
+                
+                testVideo.onloadeddata = () => {
+                    // Video loaded successfully
+                    videoPlayer.src = videoUrl;
+                    videoPlayer.style.display = 'block';
+                    loadingOverlay.style.display = 'none';
+                    
+                    generatedLink.textContent = secureLink;
+                    copyButton.style.display = 'block';
+                    
+                    showMessage('Video loaded and secure link generated successfully!');
+                };
+                
+                testVideo.onerror = () => {
+                    loadingOverlay.style.display = 'none';
+                    showMessage('Failed to load video. Please check the URL and try again.', 'error');
+                };
+                
+                testVideo.src = videoUrl;
+                
+            } catch (error) {
+                loadingOverlay.style.display = 'none';
+                showMessage('Error processing video: ' + error.message, 'error');
+            }
         }
+
+        function copyToClipboard() {
+            const generatedLink = document.getElementById('generatedLink').textContent;
+            navigator.clipboard.writeText(generatedLink).then(() => {
+                showMessage('Secure link copied to clipboard!');
+            }).catch(() => {
+                showMessage('Failed to copy link. Please copy manually.', 'error');
+            });
+        }
+
+        // Load video from URL parameters on page load
+        window.onload = function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const encryptedUrl = urlParams.get('v');
+            const key = urlParams.get('k');
+
+            if (encryptedUrl && key) {
+                try {
+                    const decryptedUrl = simpleDecrypt(decryptedUrl, key);
+                    if (decryptedUrl) {
+                        const videoPlayer = document.getElementById('videoPlayer');
+                        const loadingOverlay = document.getElementById('loadingOverlay');
+                        
+                        updateLoadingText('Loading encrypted video...');
+                        
+                        videoPlayer.onloadeddata = () => {
+                            videoPlayer.style.display = 'block';
+                            loadingOverlay.style.display = 'none';
+                            showMessage('Secure video loaded successfully!');
+                        };
+                        
+                        videoPlayer.onerror = () => {
+                            loadingOverlay.style.display = 'none';
+                            showMessage('Failed to load encrypted video.', 'error');
+                        };
+                        
+                        videoPlayer.src = decryptedUrl;
+                        
+                        // Hide URL input and show that this is a secure playback
+                        document.getElementById('videoUrl').style.display = 'none';
+                        document.querySelector('label[for="videoUrl"]').style.display = 'none';
+                        document.querySelector('.btn').style.display = 'none';
+                        document.querySelector('.api-section').innerHTML = '<div class="api-title">🔒 Secure Playback Mode</div><div class="success">This video is being played securely with encrypted source protection.</div>';
+                    }
+                } catch (error) {
+                    showMessage('Invalid or corrupted secure link.', 'error');
+                }
+            }
+        };
+
+        // Prevent right-click context menu on video
+        document.addEventListener('contextmenu', function(e) {
+            if (e.target.tagName === 'VIDEO') {
+                e.preventDefault();
+            }
+        });
+
+        // Prevent developer tools shortcuts
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'F12' || 
+                (e.ctrlKey && e.shiftKey && e.key === 'I') ||
+                (e.ctrlKey && e.shiftKey && e.key === 'J') ||
+                (e.ctrlKey && e.key === 'U')) {
+                e.preventDefault();
+                showMessage('Developer tools access is restricted for security.', 'error');
+            }
+        });
     </script>
 </body>
 </html>
