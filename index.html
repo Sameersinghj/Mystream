@@ -306,6 +306,18 @@
                     <input type="text" id="videoUrl" placeholder="https://pixeldrain.dev/api/file/9M9rwCqA?download">
                 </div>
 
+                <div class="input-group">
+                    <label for="expiryTime">Link Expiry</label>
+                    <select id="expiryTime" style="background: rgba(255, 255, 255, 0.1); color: #fff; border: 1px solid rgba(255, 255, 255, 0.2);">
+                        <option value="1">1 Hour</option>
+                        <option value="6">6 Hours</option>
+                        <option value="24">24 Hours</option>
+                        <option value="168">1 Week</option>
+                        <option value="720">1 Month</option>
+                        <option value="0">Forever</option>
+                    </select>
+                </div>
+
                 <button class="btn" onclick="loadVideo()">🎬 Load & Encrypt Video</button>
 
                 <div class="api-section">
@@ -391,30 +403,12 @@
         // Initialize particle system
         const particleSystem = new ParticleSystem(document.getElementById('particles-canvas'));
 
-        // Encryption functions
-        function simpleEncrypt(text, key) {
-            let result = '';
-            for (let i = 0; i < text.length; i++) {
-                result += String.fromCharCode(text.charCodeAt(i) ^ key.charCodeAt(i % key.length));
-            }
-            return btoa(result);
-        }
-
-        function simpleDecrypt(encryptedText, key) {
-            try {
-                const decodedText = atob(encryptedText);
-                let result = '';
-                for (let i = 0; i < decodedText.length; i++) {
-                    result += String.fromCharCode(decodedText.charCodeAt(i) ^ key.charCodeAt(i % key.length));
-                }
-                return result;
-            } catch (e) {
-                return null;
-            }
-        }
-
-        function generateKey() {
-            return Math.random().toString(36).substring(2) + Date.now().toString(36);
+        // API Configuration
+        const API_BASE_URL = 'http://localhost:3000/api'; // Change this to your server URL
+        
+        // Utility functions
+        function generateSecureId() {
+            return 'sv_' + Math.random().toString(36).substr(2, 9) + Date.now().toString(36);
         }
 
         function showMessage(message, type = 'success') {
@@ -431,6 +425,7 @@
 
         async function loadVideo() {
             const videoUrl = document.getElementById('videoUrl').value.trim();
+            const expiryHours = parseInt(document.getElementById('expiryTime').value);
             const videoPlayer = document.getElementById('videoPlayer');
             const loadingOverlay = document.getElementById('loadingOverlay');
             const generatedLink = document.getElementById('generatedLink');
@@ -445,32 +440,48 @@
                 // Show loading
                 loadingOverlay.style.display = 'flex';
                 videoPlayer.style.display = 'none';
-                updateLoadingText('Loading video...');
+                updateLoadingText('Generating secure link...');
 
-                // Generate encryption key
-                const encryptionKey = generateKey();
-                
-                // Encrypt the URL
-                const encryptedUrl = simpleEncrypt(videoUrl, encryptionKey);
-                
-                // Create secure link
-                const currentUrl = window.location.origin + window.location.pathname;
-                const secureLink = `${currentUrl}?v=${encodeURIComponent(encryptedUrl)}&k=${encodeURIComponent(encryptionKey)}`;
-                
-                // Test if video loads
+                // Test if video loads first
                 const testVideo = document.createElement('video');
                 testVideo.crossOrigin = 'anonymous';
                 
-                testVideo.onloadeddata = () => {
-                    // Video loaded successfully
-                    videoPlayer.src = videoUrl;
-                    videoPlayer.style.display = 'block';
-                    loadingOverlay.style.display = 'none';
-                    
-                    generatedLink.textContent = secureLink;
-                    copyButton.style.display = 'block';
-                    
-                    showMessage('Video loaded and secure link generated successfully!');
+                testVideo.onloadeddata = async () => {
+                    try {
+                        // Video loads, now create secure link via API
+                        const response = await fetch(`${API_BASE_URL}/create-secure-link`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({
+                                url: videoUrl,
+                                expiryHours: expiryHours
+                            })
+                        });
+
+                        if (!response.ok) {
+                            throw new Error('Failed to create secure link');
+                        }
+
+                        const data = await response.json();
+                        
+                        // Display video and secure link
+                        videoPlayer.src = videoUrl;
+                        videoPlayer.style.display = 'block';
+                        loadingOverlay.style.display = 'none';
+                        
+                        const secureLink = `${window.location.origin}${window.location.pathname}?id=${data.secureId}`;
+                        generatedLink.textContent = secureLink;
+                        copyButton.style.display = 'block';
+                        
+                        const expiryText = expiryHours === 0 ? 'never' : `in ${expiryHours} hour(s)`;
+                        showMessage(`Secure link generated successfully! Link expires ${expiryText}.`);
+                        
+                    } catch (error) {
+                        loadingOverlay.style.display = 'none';
+                        showMessage('Failed to create secure link: ' + error.message, 'error');
+                    }
                 };
                 
                 testVideo.onerror = () => {
